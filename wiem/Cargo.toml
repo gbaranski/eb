@@ -7,3 +7,9 @@ edition = "2018"
 
 [dependencies]
 eb-core = { path = "../core" }
+eb-client = { path = "../client" }
+tokio = { version = "1.12.0", features = ["rt-multi-thread", "macros"] }
+anyhow = "1.0.44"
+tui = { version = "0.16.0", default-features = false, features = ["crossterm"] }
+crossterm = { version = "0.21.0", features = ["event-stream"] }
+futures = "0.3.17"
