@@ -60,6 +60,7 @@ impl<B: Backend> App<B> {
                 KeyCode::Esc => {
                     self.exit()?;
                 }
+                KeyCode::Char(char) => {}
                 _ => {}
             },
             _ => {}
@@ -74,7 +75,6 @@ impl<B: Backend> App<B> {
             if self.should_exit {
                 break;
             }
-
             self.render()?;
             tokio::select! {
                 event = events.next() => {

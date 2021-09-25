@@ -3,5 +3,5 @@ members = [
     "core",
     "server",
     "client",
-    "wiem"
+    "term"
 ]
