@@ -28,9 +28,7 @@ Separating editors to client and a server has few advanteges:
 
 1. Server can be started on a beefy machine while running frontend on a small and slow laptop, without slowing down your development experience or consuming battery.
 2. Easy collaborative programming.
-3. Easier to create a new frontend, no need for handling LSP Server yourself. Some could say "Why would you want to implement a new fronted? We already have X."
-  - Imagine you want a native MacOS editor made with Cocoa, or a editor made in GTK, there are not that many of those, and they might not support advanced features such as LSP.
-  - I'm a Vim user myself, and I don't imagine coding in a editor which doesn't support Vim keybindings, some editors such as VSCode have plugins for that, however from my experience they make the editor horribly slow. 
+3. Easier to create a new frontend which can use native GUI toolkits such as GTK and Cocoa, or a frontend which will be have Vim-like editing. Without need of implementing LSP communication or filesystem operations. 
 4. Long-running sessions. You can run the server in background, while having editor closed, that'd greatly improve it's startup time. 
 
 
