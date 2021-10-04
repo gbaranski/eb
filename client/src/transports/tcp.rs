@@ -1,6 +1,7 @@
 use super::Error;
 use super::Transporter;
 use async_trait::async_trait;
+use bytes::BytesMut;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
@@ -28,8 +29,9 @@ impl Transporter for Transport {
         Ok(())
     }
 
-    async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
-        let n = self.stream.read(buf).await?;
+    async fn read(&mut self, buf: &mut BytesMut) -> Result<usize, Error> {
+        let n = self.stream.read_buf(buf).await?;
+        tracing::info!("n = {}", n);
         Ok(n)
     }
 }

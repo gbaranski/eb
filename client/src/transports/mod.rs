@@ -1,5 +1,6 @@
 pub mod tcp;
 
+use bytes::BytesMut;
 use url::Url;
 
 #[derive(Debug, thiserror::Error)]
@@ -19,7 +20,7 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait Transporter: Sized {
     async fn with_url(url: &Url) -> Result<Self, Error>;
-    async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error>;
+    async fn read(&mut self, buf: &mut BytesMut) -> Result<usize, Error>;
     async fn write(&mut self, bytes: &[u8]) -> Result<(), Error>;
 }
 
@@ -38,7 +39,7 @@ impl Transporter for Transport {
         }
     }
 
-    async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+    async fn read(&mut self, buf: &mut BytesMut) -> Result<usize, Error> {
         match self {
             Transport::Tcp(t) => t.read(buf).await,
         }
