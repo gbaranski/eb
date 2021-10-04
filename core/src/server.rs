@@ -1,4 +1,3 @@
-use crate::Position;
 use serde::Deserialize;
 use serde::Serialize;
 
