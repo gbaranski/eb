@@ -7,9 +7,9 @@
 - [Project status](#project-status)
 - [Problem](#problem)
 - [Q&A](#qa)
-  - [Why not Vim over SSH/Mosh?](#why-not-vim-over-sshmosh)
-  - [What's different from Kakoune server?](#whats-different-from-kakoune-server)
-        - [Why not `xi-editor`?](#why-not-xi-editor)
+    - [Why not Vim over SSH/Mosh?](#why-not-vim-over-sshmosh)
+    - [What's different from Kakoune server?](#whats-different-from-kakoune-server)
+    - [Why not `xi-editor`?](#why-not-xi-editor)
 
 
 # Architecture
@@ -34,17 +34,17 @@ Separating editors to client and a server has few advanteges:
 
 # Q&A
 
-## Why not Vim over SSH/Mosh?
+### Why not Vim over SSH/Mosh?
 
 I've been doing this for a long time, this works, but it has few cons:
 - Quite high input latency.
 - Mosh doesn't support true color, unless we use `master` branch which isn't available on Termux.
 - No native feeling. Not a big issue on Laptop/PC, but on mobile it is hard to use.
 
-## What's different from Kakoune server?
+### What's different from Kakoune server?
 
 [Kakoune](https://github.com/mawww/kakoune) makes server used only by the kakoune frontend. `eb` wants to be something that can be used by many editors such as VSCode. Similarly how Microsoft came up with LSP which is now used by most of the editors right now. 
 
-##### Why not `xi-editor`?
+### Why not `xi-editor`?
 
 `xi-editor` is dead, but I'd like to take some inspiration from it's design.
