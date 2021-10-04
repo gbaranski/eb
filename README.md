@@ -1,5 +1,9 @@
-Backend for code editors.
 
+
+<h1 align="center">
+  <a href="https://github.com/gbaranski/eb">eb - Editor Backend</a>
+</h1>
+<h4 align="center">Editor backend for code editors following the client server achitecture.</h4>
 
 ![Architecture](docs/architecture.png)
 
@@ -19,13 +23,14 @@ Separating editors to client and a server has few advanteges:
 
 # Q&A
 
-##### Why can't you just SSH/Mosh to a remote server from your crappy laptop and launch Vim inside of that?
+##### Why can't you just SSH/Mosh to a remote server and launch Vim there?
 
 I've been doing this for a long time, this works, but it has few cons:
 - Quite high input latency.
 - If we use Mosh, we don't have true color support, it is theoritically supported, but only on `master` branch which isn't available if we want to use it on Termux.
+- No native feeling, maybe that's not a big issue when you connect from a laptop or a PC, but it's an issue if you connect from mobile phone. `eb` will allow making Android/iOS app which will connect to editor server.
 
-##### What's so different from Kakoune server?
+##### What's different from Kakoune server?
 
 While Kakoune makes server which is used only by the kakoune frontend, I want to make a standard editor backend that can be used by many editors such as VSCode. Similarly how Microsoft came up with LSP, which is used by most of the editors right now.  
 
