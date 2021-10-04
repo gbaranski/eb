@@ -1,7 +1,7 @@
 Backend for code editors.
 
 
-![Architecture](docs/architecture.svg)
+![Architecture](docs/architecture.png)
 
 # Problem
 
