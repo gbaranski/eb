@@ -4,9 +4,8 @@ use crossterm::event::EventStream;
 use crossterm::event::KeyCode;
 use crossterm::execute;
 use crossterm::terminal;
-use eb_client::Client;
-use eb_core::client;
-use eb_core::server;
+use eb_rpc::client;
+use eb_rpc::Client;
 use futures::StreamExt;
 use std::io::Stdout;
 use std::io::Write;
@@ -18,15 +17,16 @@ use tui::layout::Layout;
 use tui::widgets::Paragraph;
 use tui::Terminal;
 
-pub struct App<B: Backend> {
+pub struct App<B: Backend, C: Client> {
     terminal: Terminal<B>,
-    client: Client,
+    client: C,
     should_exit: bool,
     content: String,
+    cursor: usize,
 }
 
-impl App<CrosstermBackend<Stdout>> {
-    pub fn new(client: Client) -> Result<Self, anyhow::Error> {
+impl<C: Client> App<CrosstermBackend<Stdout>, C> {
+    pub fn new(client: C) -> Result<Self, anyhow::Error> {
         terminal::enable_raw_mode()?;
         let mut stdout = std::io::stdout();
         execute!(stdout, terminal::EnterAlternateScreen)?;
@@ -35,13 +35,14 @@ impl App<CrosstermBackend<Stdout>> {
         Ok(Self {
             terminal,
             should_exit: false,
-            content: String::new(),
             client,
+            content: String::new(),
+            cursor: 0,
         })
     }
 }
 
-impl<B: Backend> App<B> {
+impl<B: Backend, C: Client + Send + Sync> App<B, C> {
     fn render(&mut self) -> Result<(), anyhow::Error> {
         let content = self.content.to_string();
         self.terminal.draw(|f| {
@@ -75,24 +76,15 @@ impl<B: Backend> App<B> {
                 // }
                 KeyCode::Char(char) => {
                     self.client
-                        .send(&client::Message::Insert {
+                        .insert(client::insert::Request {
                             content: char.to_string(),
+                            cursor: self.cursor,
                         })
-                        .await?;
+                        .await??;
                 }
                 _ => unimplemented!(),
             },
             _ => {}
-        };
-        Ok(())
-    }
-
-    async fn handle_message(&mut self, message: server::Message) -> Result<(), anyhow::Error> {
-        tracing::debug!("Received message: {:?}", message);
-        match message {
-            server::Message::Insert { content } => {
-                self.content += &content;
-            }
         };
         Ok(())
     }
@@ -111,13 +103,6 @@ impl<B: Backend> App<B> {
                 event = events.next() => {
                     if let Some(Ok(event)) = event {
                         self.handle_event(event).await?;
-                    }
-                }
-                message = self.client.recv() => {
-                    if let Some(message) = message? {
-                        self.handle_message(message).await?
-                    } else {
-                        return Ok(())
                     }
                 }
             };
