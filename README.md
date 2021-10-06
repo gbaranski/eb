@@ -32,6 +32,12 @@ Separating editors to client and a server has few advanteges:
 4. Long-running sessions. You can run the server in background, while having editor closed, that'd greatly improve it's startup time. 
 
 
+# Protocol
+
+JSON-RPC is used for communication between frontend and backend.
+
+Check [protocol.md](docs/protocol.md) for more information
+
 # Q&A
 
 ### Why not Vim over SSH/Mosh?
