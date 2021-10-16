@@ -1,7 +1,6 @@
 [workspace]
 members = [
-    "core",
     "server",
-    "client",
-    "term"
+    "term",
+    "rpc"
 ]

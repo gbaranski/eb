@@ -30,7 +30,14 @@ Separating editors to client and a server has few advanteges:
 2. Easy collaborative programming.
 3. Easier to create a new frontend which can use native GUI toolkits such as GTK and Cocoa, or a frontend which will be have Vim-like editing. Without need of implementing LSP communication or filesystem operations. 
 4. Long-running sessions. You can run the server in background, while having editor closed, that'd greatly improve it's startup time. 
+5. Frontend can be implemented on almost any platform, it could be made for Web and work similarly to Github Codespaces.
 
+
+# Protocol
+
+JSON-RPC is used for communication between frontend and backend.
+
+Check [protocol.md](docs/protocol.md) for more information
 
 # Q&A
 

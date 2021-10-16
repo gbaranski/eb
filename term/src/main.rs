@@ -1,11 +1,10 @@
 mod app;
 
-use eb_client::Client;
 use url::Url;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let default_url = format!("tcp://localhost:{}", eb_core::DEFAULT_TCP_PORT);
+    let default_url = format!("ws://localhost:{}", 8080);
     let matches = clap::App::new("ebterm")
         .bin_name(clap::crate_name!())
         .version(clap::crate_version!())
@@ -56,7 +55,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .init();
 
     let server_url = Url::parse(matches.value_of("server-url").unwrap()).unwrap();
-    let client = Client::new(&server_url).await?;
+    let client = eb_rpc::connect_ws(&server_url).await?;
 
     let app = app::App::new(client)?;
     app.run().await?;
