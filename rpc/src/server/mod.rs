@@ -1,3 +1,5 @@
+pub mod ws;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -42,32 +44,10 @@ pub mod open {
 }
 
 use async_trait::async_trait;
-
-#[derive(Debug, Serialize, Deserialize, thiserror::Error)]
-pub enum Error {
-    #[error("io: {0}")]
-    IO(String),
-    #[error("json: {0}")]
-    Json(String),
-}
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Self::IO(err.to_string())
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Self {
-        Self::Json(err.to_string())
-    }
-}
+use crate::Error;
 
 #[async_trait]
-pub trait Server {
-    async fn insert(
-        &self,
-        params: insert::Request,
-    ) -> Result<insert::Request, Error>;
-    async fn open(&self, params: open::Request) -> Result<(), Error>;
+pub trait Peer {
+    async fn insert(&self, params: insert::Request) -> Result<insert::Response, Error>;
+    async fn open(&self, params: open::Request) -> Result<open::Response, Error>;
 }

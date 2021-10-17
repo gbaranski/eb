@@ -1,5 +1,5 @@
-use super::Error;
 use crate::jsonrpc;
+use crate::Error;
 use async_trait::async_trait;
 use futures::Sink;
 use futures::SinkExt;
@@ -9,6 +9,8 @@ use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite;
 use url::Url;
+
+use super::Peer;
 
 impl From<tungstenite::Error> for Error {
     fn from(err: tungstenite::Error) -> Self {
@@ -22,7 +24,7 @@ pub struct Transport {
 }
 
 impl Transport {
-    pub async fn new(url: Url) -> Result<Self, Error> {
+    pub async fn new(peer: impl Peer, url: Url) -> Result<Self, Error> {
         let (stream, _) = tokio_tungstenite::connect_async(url).await?;
         let (stream_tx, stream_rx) = stream.split();
         let (request_tx, request_rx) = mpsc::unbounded_channel();
