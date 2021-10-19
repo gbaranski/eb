@@ -1,7 +1,9 @@
-pub mod ws;
-
+use crate::Error;
+use futures::StreamExt;
 use serde::Deserialize;
 use serde::Serialize;
+use tokio::net::TcpListener;
+use tokio::net::ToSocketAddrs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Request {
@@ -43,11 +45,14 @@ pub mod open {
     pub struct Response {}
 }
 
-use async_trait::async_trait;
-use crate::Error;
+pub async fn run(address: impl ToSocketAddrs) -> Result<(), Error> {
+    let listener = TcpListener::bind(address).await?;
+    loop {
+        let (stream, address) = listener.accept().await?;
+        tokio::spawn(async move {
+            let stream = tokio_tungstenite::accept_async(stream).await.unwrap();
+            let (tx, rx) = stream.split();
 
-#[async_trait]
-pub trait Peer {
-    async fn insert(&self, params: insert::Request) -> Result<insert::Response, Error>;
-    async fn open(&self, params: open::Request) -> Result<open::Response, Error>;
+        });
+    }
 }

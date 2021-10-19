@@ -1,11 +1,11 @@
+use async_trait::async_trait;
 use crossterm::event::DisableMouseCapture;
 use crossterm::event::Event;
 use crossterm::event::EventStream;
 use crossterm::event::KeyCode;
 use crossterm::execute;
 use crossterm::terminal;
-use eb_rpc::client;
-use eb_rpc::Client;
+use eb_rpc::client::Client;
 use futures::StreamExt;
 use std::io::Stdout;
 use std::io::Write;
@@ -16,33 +16,36 @@ use tui::layout::Direction;
 use tui::layout::Layout;
 use tui::widgets::Paragraph;
 use tui::Terminal;
+use url::Url;
 
-pub struct App<B: Backend, C: Client> {
+pub struct App<B: Backend> {
     terminal: Terminal<B>,
-    client: C,
+    client: Client,
     should_exit: bool,
     content: String,
     cursor: usize,
 }
 
-impl<C: Client> App<CrosstermBackend<Stdout>, C> {
-    pub fn new(client: C) -> Result<Self, anyhow::Error> {
+impl App<CrosstermBackend<Stdout>> {
+    pub async fn new(server_url: Url) -> Result<Self, anyhow::Error> {
         terminal::enable_raw_mode()?;
         let mut stdout = std::io::stdout();
         execute!(stdout, terminal::EnterAlternateScreen)?;
         let backend = CrosstermBackend::new(stdout);
         let terminal = tui::Terminal::new(backend)?;
+        let client = eb_rpc::client::Client::connect(server_url).await?;
+
         Ok(Self {
             terminal,
-            should_exit: false,
             client,
+            should_exit: false,
             content: String::new(),
             cursor: 0,
         })
     }
 }
 
-impl<B: Backend, C: Client + Send + Sync> App<B, C> {
+impl<B: Backend> App<B> {
     fn render(&mut self) -> Result<(), anyhow::Error> {
         let content = self.content.to_string();
         self.terminal.draw(|f| {
@@ -75,12 +78,11 @@ impl<B: Backend, C: Client + Send + Sync> App<B, C> {
                 //     }
                 // }
                 KeyCode::Char(char) => {
-                    self.client
-                        .insert(client::insert::Request {
+                    self.client.call(eb_rpc::server::insert::Request{
                             content: char.to_string(),
                             cursor: self.cursor,
-                        })
-                        .await??;
+
+                    }, "insert", eb_rpc::Id::Number(1)).await?;
                 }
                 _ => unimplemented!(),
             },
@@ -92,7 +94,7 @@ impl<B: Backend, C: Client + Send + Sync> App<B, C> {
     pub async fn run(mut self) -> Result<(), anyhow::Error> {
         let mut events = EventStream::new();
         self.terminal.clear()?;
-        tokio::spawn(async move {});
+
         loop {
             if self.should_exit {
                 break;

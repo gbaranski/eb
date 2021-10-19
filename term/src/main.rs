@@ -1,5 +1,6 @@
 mod app;
 
+use app::App;
 use url::Url;
 
 #[tokio::main]
@@ -55,9 +56,8 @@ async fn main() -> Result<(), anyhow::Error> {
         .init();
 
     let server_url = Url::parse(matches.value_of("server-url").unwrap()).unwrap();
-    let client = eb_rpc::connect_ws(&server_url).await?;
 
-    let app = app::App::new(client)?;
+    let app = App::new(server_url).await?;
     app.run().await?;
 
     Ok(())

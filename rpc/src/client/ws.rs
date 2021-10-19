@@ -10,8 +10,6 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite;
 use url::Url;
 
-use super::Peer;
-
 impl From<tungstenite::Error> for Error {
     fn from(err: tungstenite::Error) -> Self {
         Self::Transport(err.to_string())
@@ -24,7 +22,7 @@ pub struct Transport {
 }
 
 impl Transport {
-    pub async fn new(peer: impl Peer, url: Url) -> Result<Self, Error> {
+    pub async fn new(url: Url) -> Result<Self, Error> {
         let (stream, _) = tokio_tungstenite::connect_async(url).await?;
         let (stream_tx, stream_rx) = stream.split();
         let (request_tx, request_rx) = mpsc::unbounded_channel();
@@ -92,10 +90,6 @@ impl super::Transport for Transport {
             .recv()
             .await
             .map_err(|_| Error::Transport(String::from("request_tx is closed")))?;
-        todo!()
-    }
-
-    fn get_id(&self) -> usize {
         todo!()
     }
 }
