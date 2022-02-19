@@ -1,7 +1,11 @@
 use std::{collections::HashMap, net::SocketAddr};
 
-use eb_core::SessionID;
-use futures::stream::{SplitSink, StreamExt};
+use eb_core::{client, server, SessionID};
+use futures::{
+    future,
+    stream::{SplitSink, StreamExt},
+    SinkExt,
+};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 use tokio_tungstenite::{tungstenite, WebSocketStream};
 use url::Url;
@@ -12,6 +16,7 @@ type ServerName = &'static str;
 pub enum ServerMessage {
     Connected(SessionID, SessionHandle, SocketAddr),
     Disconnected(SessionID),
+    Set { content: String },
     Insert { cursor: usize, content: String },
     Open { url: Url },
 }
@@ -37,13 +42,13 @@ impl Server {
             let session_id = SessionID::new_v4();
             let (tx, mut rx) = stream.split();
             let session_handle = new_session(session_id, tx, handle.clone());
-            handle.connected(session_id, session_handle.clone(), address).await;
+            handle
+                .connected(session_id, session_handle.clone(), address)
+                .await;
             tokio::spawn(async move {
                 while let Some(message) = rx.next().await {
                     let message = message?;
                     session_handle.websocket_message(message).await;
-                    // let message = message?;
-                    // handle.message(session_id, message);
                 }
                 Ok::<_, anyhow::Error>(())
             });
@@ -52,6 +57,11 @@ impl Server {
 
     async fn updated(&mut self) {
         tracing::info!("current content: {}", self.content);
+        let futures = self
+            .sessions
+            .values()
+            .map(|handle| handle.update(self.content.clone()));
+        future::join_all(futures).await;
     }
 
     async fn run(
@@ -71,12 +81,16 @@ impl Server {
                 }
                 ServerMessage::Insert { cursor, content } => {
                     self.content.insert_str(cursor, &content);
-                    tracing::info!("Inserted {} at {}", content, cursor);
+                    tracing::info!("insert {} at {}", content, cursor);
                     self.updated().await;
                 }
                 ServerMessage::Open { url } => {
                     self.file = Some(url);
                 }
+                ServerMessage::Set { content } => {
+                    self.content = content;
+                    self.updated().await;
+                },
             };
         }
         Ok(())
@@ -89,15 +103,30 @@ pub struct ServerHandle {
 }
 
 impl ServerHandle {
-    pub async fn connected(&self, session_id: SessionID, session_handle: SessionHandle, address: SocketAddr) {
+    pub async fn connected(
+        &self,
+        session_id: SessionID,
+        session_handle: SessionHandle,
+        address: SocketAddr,
+    ) {
         self.sender
-            .send(ServerMessage::Connected(session_id, session_handle, address))
+            .send(ServerMessage::Connected(
+                session_id,
+                session_handle,
+                address,
+            ))
             .await
     }
 
     pub async fn disconnected(&self, session_id: SessionID) {
         self.sender
             .send(ServerMessage::Disconnected(session_id))
+            .await
+    }
+
+    pub async fn set(&self, content: String) {
+        self.sender
+            .send(ServerMessage::Set {  content })
             .await
     }
 
@@ -131,6 +160,7 @@ pub fn new_server(address: impl ToSocketAddrs + Send + 'static) -> ServerHandle 
 #[derive(Debug)]
 pub enum SessionMessage {
     WebSocketMessage(tungstenite::Message),
+    Update(String),
 }
 
 impl acu::Message for SessionMessage {}
@@ -148,7 +178,6 @@ impl Session {
             match message {
                 SessionMessage::WebSocketMessage(message) => match message {
                     tungstenite::Message::Text(text) => {
-                        use eb_core::client;
                         let json: client::Frame = serde_json::from_str(&text).unwrap();
                         match json {
                             client::Frame::Insert(client::Insert { cursor, content }) => {
@@ -157,7 +186,9 @@ impl Session {
                             client::Frame::Open(client::Open { url }) => {
                                 self.server.open(url).await
                             }
-                            _ => unimplemented!(),
+                            client::Frame::Set(client::Set { content }) => {
+                                self.server.set(content).await
+                            }
                         }
                     }
                     tungstenite::Message::Binary(_) => todo!(),
@@ -166,6 +197,11 @@ impl Session {
                     tungstenite::Message::Close(_) => self.server.disconnected(self.id).await,
                     tungstenite::Message::Frame(_) => todo!(),
                 },
+                SessionMessage::Update(text) => {
+                    let message = server::Frame::Update(server::Update { content: text });
+                    let json = serde_json::to_string(&message).unwrap();
+                    self.sink.send(tungstenite::Message::Text(json)).await?;
+                }
             };
         }
         Ok(())
@@ -182,6 +218,10 @@ impl SessionHandle {
         self.sender
             .send(SessionMessage::WebSocketMessage(message))
             .await
+    }
+
+    pub async fn update(&self, content: String) {
+        self.sender.send(SessionMessage::Update(content)).await
     }
 }
 

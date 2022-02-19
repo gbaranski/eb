@@ -29,11 +29,16 @@ pub mod client {
     use url::Url;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    #[non_exhaustive]
     #[serde(tag = "type", rename_all = "kebab-case")]
     pub enum Frame {
+        Set(Set),
         Insert(Insert),
         Open(Open),
+    }
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    pub struct Set {
+        pub content: String,
     }
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -53,10 +58,9 @@ pub mod server {
     use serde::Serialize;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    #[non_exhaustive]
     #[serde(tag = "type", rename_all = "kebab-case")]
     pub enum Frame {
-        Update,
+        Update(Update),
     }
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
