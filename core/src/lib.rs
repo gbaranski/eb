@@ -1,27 +1,14 @@
-use serde::Deserialize;
-use serde::Serialize;
+pub type ClientID = uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, thiserror::Error)]
-pub enum Error {
-    #[error("transport: {0}")]
-    Transport(String),
-    #[error("json: {0}")]
-    Json(String),
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, strum::Display)]
+pub enum Author {
+    Server,
+    Client(ClientID),
 }
 
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Self::Transport(err.to_string())
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Self {
-        Self::Json(err.to_string())
-    }
-}
-
-pub type SessionID = uuid::Uuid;
+pub type Chronofold = chronofold::Chronofold<Author, char>;
+pub type Change = chronofold::Change<char>;
+pub type Op = chronofold::Op<Author, char>;
 
 pub mod client {
     use serde::Deserialize;
@@ -31,25 +18,8 @@ pub mod client {
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     #[serde(tag = "type", rename_all = "kebab-case")]
     pub enum Frame {
-        Set(Set),
-        Insert(Insert),
-        Open(Open),
-    }
-
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    pub struct Set {
-        pub content: String,
-    }
-
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    pub struct Insert {
-        pub cursor: usize,
-        pub content: String,
-    }
-
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    pub struct Open {
-        pub url: Url,
+        Insert { char: char, index: usize },
+        Open { url: Url },
     }
 }
 

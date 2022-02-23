@@ -10,6 +10,7 @@ acu = { version = "0.3.3", features = ["uuid"] }
 anyhow = "1.0.44"
 async-trait = "0.1.51"
 bytes = "1.1.0"
+chronofold = "0.4.0"
 eb-core = { path = "../core" }
 futures = "0.3.21"
 ropey = "1.3.1"

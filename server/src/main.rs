@@ -1,6 +1,6 @@
 use eb_server::new_server;
 
-const LOG_ENV: &str = "EB_SERVER_LOG";
+const LOG_ENV: &str = "EB_LOG";
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {

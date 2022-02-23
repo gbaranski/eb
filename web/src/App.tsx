@@ -14,19 +14,13 @@ interface UpdateFrame extends ServerFrame {
 
 //
 
-type ClientFrameType = 'set' | 'insert' | 'open';
-
 interface ClientFrame {
-  type: ClientFrameType
+  type: 'insert' | 'open',
 };
 
-interface SetFrame extends ClientFrame {
-  content: string,
-}
-
 interface InsertFrame extends ClientFrame {
-  cursor: number,
-  content: string,
+  char: string,
+  index: number,
 }
 
 interface Open extends ClientFrame {
@@ -35,17 +29,23 @@ interface Open extends ClientFrame {
 
 const ws = new WebSocket("ws://localhost:8080")
 
-const set = (content: string) => {
-  let frame: SetFrame = {
-    type: 'set',
-    content,
-  };
+const send = (frame: ClientFrame) => {
   const json = JSON.stringify(frame);
   ws.send(json)
 }
 
+const insert = (char: string, index: number) => {
+  console.assert(char.length === 1);
+  const frame: InsertFrame = {
+    type: 'insert',
+    char,
+    index,
+  };
+  send(frame);
+}
+
 function App() {
-  let [content, setContent] = useState('');
+  let [content, setContent] = useState<string>("");
 
   ws.onmessage = (event) => {
     const json = JSON.parse(event.data);
@@ -61,8 +61,7 @@ function App() {
 
   return (
     <div className="App">
-      <input type="text" id="code" value={content} onChange={(e) => setContent(e.target.value)}/>
-      <button onClick={(_) => set(content)}>Save</button>
+      <textarea readOnly value={content} onKeyPress={(e) => insert(e.key, content.length)}/>
     </div>
   );
 }
